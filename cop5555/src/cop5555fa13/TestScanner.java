@@ -15,11 +15,7 @@ public class TestScanner {
 	 * You probably will not need to modify this method.
 	 */
 	private void compareText (String input, String expected) throws LexicalException {
-		/**
-		 * tokenstream ts = new takenStream("sahil")
-		 * ts2 =new Tokenstream("ankush")
-		 * ts=ts2
-		 */
+		
 		TokenStream stream = new TokenStream(input);
 		Scanner s = new Scanner(stream);
 		try{

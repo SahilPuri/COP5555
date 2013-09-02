@@ -16,6 +16,22 @@ public class Scanner {
    //ADD METHODS AND FIELDS
 	TokenStream stream;
 	int characterPtr;
+	//List of keywords
+	static String[] keywords ={"image", "int", "boolean","pixel","pixels","blue","red","green","Z","shape","width","height","location","x_loc",
+			"y_loc","SCREEN_SIZE","visible","x","y","pause","while","if","else"};
+	//List of corresponding classes
+	static Kind[] keywords_class={image,_int,_boolean,pixel,pixels,blue,red,green,Z,shape, width, height,location, x_loc, 
+		y_loc, SCREEN_SIZE, visible,x, y,pause, _while,_if, _else};
+	public static HashMap<String,TokenStream.Kind> reservedWords= new HashMap<String, TokenStream.Kind>();
+	
+	//Initialize the Hashmaps
+	static{
+		for(int i=0;i<keywords.length;i++)
+			reservedWords.put(keywords[i], keywords_class[i]);
+		reservedWords.put("true",BOOLEAN_LIT);
+		reservedWords.put("false",BOOLEAN_LIT);
+	}
+	
     
 	public Scanner(TokenStream stream) {
 		//IMPLEMENT THE CONSTRUCTOR
@@ -66,34 +82,52 @@ public class Scanner {
 	
 			switch(state){
 				case 0://Start State
-					if(Character.isAlphabetic(nextChar) || nextChar == '_' || nextChar== '$')
+					if(Character.isAlphabetic(nextChar) || nextChar == '_' || nextChar== '$')//Indicates the token will be an Identifier or reserved word
 						state=1;
-					else if(nextChar == '0'){
+					else if(nextChar == '0'){//Initiates with Zero, token found
 						end=++characterPtr;
 						token = stream.new Token(INT_LIT,begin,end);
 						return token;
-					}else if(Character.isDigit(nextChar))
+					}else if(Character.isDigit(nextChar))// Initiates the integer
 						state=2;
+					else if(nextChar == '"')//Double quotes indicate strings
+						state=3;
 					break;
 				case 1://Normal Literal or String Literal
 					
 					if(!Character.isAlphabetic(nextChar) && !Character.isDigit(nextChar) && nextChar != '_' && nextChar!= '$'){
+						//The token is completed if it does not follow the following grammar [a-zA-Z0-9_$]
 						end=characterPtr;
 						token = stream.new Token(IDENT,begin,end);
+						String token_value=token.getText();
+						if(reservedWords.containsKey(token_value))//Finding if identifiers is a reserved words
+							token=stream.new Token(reservedWords.get(token_value),begin,end);
 						return token; 
 					}
 					break;
 				case 2://Integer Literal
-					if(!Character.isDigit(nextChar)){
+					if(!Character.isDigit(nextChar)){//Only Integers
 						end=characterPtr;
 						token = stream.new Token(INT_LIT,begin,end);
 						return token; 
 					}
 					break;
+				case 3://String Literal
+					begin=characterPtr;
+					while(characterPtr < stream.inputChars.length && stream.inputChars[characterPtr] != '"')
+						characterPtr++;
+					
+					if(characterPtr == stream.inputChars.length){
+						throw stream.new LexicalException(characterPtr, "illegal defination of String: Missing Quotes");
+					}
+					end=characterPtr++;//move to next token
+					token = stream.new Token(STRING_LIT,begin,end);
+					return token; 
+				
 			}
-			characterPtr++;
+			characterPtr++;//Move to Next character
 			
-		}while(characterPtr <= stream.inputChars.length);
+		}while(characterPtr <= stream.inputChars.length);//First overflow of the array indicates EOF
 		
 		return null;
 	}
@@ -114,11 +148,10 @@ public class Scanner {
 	}
 	
 	public static void main(String[] args) throws LexicalException {
-		String input = "042abc01 320";
-		String expected = "0,42,abc01,320,";  //comma separated (and terminated)
+		String input = "042abc int true";
+		String expected = "0,42,abc,int,true,";  //comma separated (and terminated)
 		                                           //text of tokens in input
 		compareText(input,expected);
 	}
 }
-
 
