@@ -48,6 +48,7 @@ public class TokenStream{
 		char prev = 0;
 		for (int i = 1; i != inputChars.length; i++) {
 			char ch = inputChars[i];
+			
 			if ((ch == '\n' && prev != '\r') || ch == '\r'
 				|| ch == '\u0085' || ch == '\u2028' || ch == '\u2029'){
 				tmp[lineCnt++] = i;

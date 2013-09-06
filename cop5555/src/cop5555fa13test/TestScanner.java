@@ -1,8 +1,17 @@
-package cop5555fa13;
+package cop5555fa13test;
 
 import static cop5555fa13.TokenStream.Kind.EOF;
 import static org.junit.Assert.assertEquals;
+
 import org.junit.Test;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.nio.charset.Charset;
 
 import cop5555fa13.Scanner;
 import cop5555fa13.TokenStream;
@@ -15,7 +24,21 @@ public class TestScanner {
 	 * You probably will not need to modify this method.
 	 */
 	private void compareText (String input, String expected) throws LexicalException {
-		
+		TokenStream stream = new TokenStream(input);
+		Scanner s = new Scanner(stream);
+		try{
+		s.scan();
+		}
+		catch(LexicalException e){
+			System.out.println(e.toString());
+			throw e;
+		}
+		String output = stream.tokenTextListToString();
+		System.out.println(output);
+		assertEquals(expected,output);	
+	}
+	
+	private void compareText (Reader input, String expected) throws LexicalException {
 		TokenStream stream = new TokenStream(input);
 		Scanner s = new Scanner(stream);
 		try{
@@ -50,13 +73,13 @@ public class TestScanner {
      * your input string would need to be
      *     "print_string(\"this is a string literal\")"
      */
-	@Test
+	/*@Test
 	public void testScan0() throws LexicalException  {
 		String input = "this is a test test ";
 		String expected = "this,is,a,test,test,";  //comma separated (and terminated)
 		                                           //text of tokens in input
 		compareText(input,expected);
-	}
+	}*/
 	
 	
 	/* Use this test case pattern to test input with known errors where an exception should be thrown.  
@@ -91,6 +114,64 @@ public class TestScanner {
 	public void testScan3() throws LexicalException {
 		String input = "123+456-abc*,()[] X Y x y Z if else+";
 		String expected = "123,+,456,-,abc,*,,,(,),[,],X,Y,x,y,Z,if,else,+,";
+		compareText(input,expected);
+	}
+	*/
+	//testing of COMMENTS
+	@Test
+	public void testScan4() throws LexicalException, FileNotFoundException  {
+        // replace this with a known encoding if possible
+        Charset encoding = Charset.defaultCharset();
+        File file = new File("test3");
+        InputStream in = new FileInputStream(file);
+        Reader input = new InputStreamReader(in, encoding);
+		String expected = "/,";
+		compareText(input,expected);
+	}
+	/*
+	//testing of KEYWORDS and BOOLEANS
+	@Test
+	public void testScan5() throws LexicalException, FileNotFoundException  {
+        // replace this with a known encoding if possible
+        Charset encoding = Charset.defaultCharset();
+        File file = new File("test1");
+        InputStream in = new FileInputStream(file);
+        Reader input = new InputStreamReader(in, encoding);
+		String expected = "image,int,boolean,pixel,pixels,blue,red,green,Z,shape,width,height,location,x_loc,y_loc,SCREEN_SIZE,visible,x,y,pause,while,if,else,true,false,image,int,boolean,pixel,pixels,blue,red,green,Z,shape,width,height,location,x_loc,y_loc,SCREEN_SIZE,visible,x,y,pause,while,if,else,true,false,";
+		compareText(input,expected);
+	}
+	
+	@Test (expected=LexicalException.class)
+	public void testIllegalEOF() throws LexicalException, FileNotFoundException  {
+        // replace this with a known encoding if possible
+        Charset encoding = Charset.defaultCharset();
+        File file = new File("test0");
+        InputStream in = new FileInputStream(file);
+        Reader input = new InputStreamReader(in, encoding);
+		String expected = "dummy";
+		compareText(input,expected);
+	}
+	
+	//can string literals contain CR????? or should this count as white space and be eliminated?	
+	@Test 
+	public void testScan7() throws LexicalException, FileNotFoundException  {
+        // replace this with a known encoding if possible
+        Charset encoding = Charset.defaultCharset();
+        File file = new File("test2");
+        InputStream in = new FileInputStream(file);
+        Reader input = new InputStreamReader(in, encoding);
+		String expected = "string literal,another\r\n \tstring literal?#,";
+		compareText(input,expected);
+	}
+	
+	/*@Test 
+	public void testScan8() throws LexicalException, FileNotFoundException  {
+        // replace this with a known encoding if possible
+        Charset encoding = Charset.defaultCharset();
+        File file = new File("test4");
+        InputStream in = new FileInputStream(file);
+        Reader input = new InputStreamReader(in, encoding);
+		String expected = "abok32,";
 		compareText(input,expected);
 	}*/
 	

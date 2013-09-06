@@ -3,9 +3,8 @@ package cop5555fa13;
 import static cop5555fa13.TokenStream.Kind.*;
 import static org.junit.Assert.assertEquals;
 
+import java.util.ArrayList;
 import java.util.HashMap;
-
-import javax.print.attribute.standard.Chromaticity;
 
 import cop5555fa13.TokenStream.Kind;
 import cop5555fa13.TokenStream.LexicalException;
@@ -16,23 +15,31 @@ public class Scanner {
    //ADD METHODS AND FIELDS
 	TokenStream stream;
 	int characterPtr;
+	ArrayList<Integer> lineBreaks=new ArrayList<Integer>();
 	//List of keywords
-	static String[] keywords ={"image", "int", "boolean","pixel","pixels","blue","red","green","Z","shape","width","height","location","x_loc",
+	String[] keywords ={"image", "int", "boolean","pixel","pixels","blue","red","green","Z","shape","width","height","location","x_loc",
 			"y_loc","SCREEN_SIZE","visible","x","y","pause","while","if","else"};
 	//List of corresponding classes
-	static Kind[] keywords_class={image,_int,_boolean,pixel,pixels,blue,red,green,Z,shape, width, height,location, x_loc, 
+	Kind[] keywords_class={image,_int,_boolean,pixel,pixels,blue,red,green,Z,shape, width, height,location, x_loc, 
 		y_loc, SCREEN_SIZE, visible,x, y,pause, _while,_if, _else};
-	static char[] seperators = {'.',';',',','(',')','[',']','{','}',':','?'}; 
-	static Kind[] seperators_class = {DOT, SEMI, COMMA, LPAREN, RPAREN, LSQUARE, RSQUARE, LBRACE, RBRACE, COLON, QUESTION};
-	static String[] operators = { "=","|","&","==","!=","<",">","<=",">=","+","-","*","/","%","!","<<",">>"};
-	static Kind[] operators_class={ASSIGN, OR, AND, EQ, NEQ, LT, GT, LEQ, GEQ, PLUS, MINUS, TIMES, DIV, MOD, NOT, LSHIFT, RSHIFT};
+	char[] seperators = {'.',';',',','(',')','[',']','{','}',':','?'}; 
+	Kind[] seperators_class = {DOT, SEMI, COMMA, LPAREN, RPAREN, LSQUARE, RSQUARE, LBRACE, RBRACE, COLON, QUESTION};
+	String[] operators = { "=","|","&","==","!=","<",">","<=",">=","+","-","*","/","%","!","<<",">>"};
+	Kind[] operators_class={ASSIGN, OR, AND, EQ, NEQ, LT, GT, LEQ, GEQ, PLUS, MINUS, TIMES, DIV, MOD, NOT, LSHIFT, RSHIFT};
 	
-	static HashMap<String,TokenStream.Kind> reservedWords= new HashMap<String, TokenStream.Kind>();
-	static HashMap<Character,TokenStream.Kind> seperatorMaps= new HashMap<Character, TokenStream.Kind>();
-	static HashMap<String,TokenStream.Kind> operatorMaps= new HashMap<String, TokenStream.Kind>();
+	HashMap<String,TokenStream.Kind> reservedWords= new HashMap<String, TokenStream.Kind>();
+	HashMap<Character,TokenStream.Kind> seperatorMaps= new HashMap<Character, TokenStream.Kind>();
+	HashMap<String,TokenStream.Kind> operatorMaps= new HashMap<String, TokenStream.Kind>();
 	
-	//Initialize the Hashmaps
-	static{
+	public Scanner(TokenStream stream) {
+		//IMPLEMENT THE CONSTRUCTOR
+		this.stream=stream;
+		this.characterPtr=0;
+		
+		reservedWords= new HashMap<String, TokenStream.Kind>();
+		seperatorMaps= new HashMap<Character, TokenStream.Kind>();
+		operatorMaps= new HashMap<String, TokenStream.Kind>();
+		
 		for(int i=0;i<keywords.length;i++)
 			reservedWords.put(keywords[i], keywords_class[i]);
 		reservedWords.put("true",BOOLEAN_LIT);
@@ -42,13 +49,6 @@ public class Scanner {
 		
 		for(int i=0;i<operators.length;i++)
 			operatorMaps.put(operators[i], operators_class[i]);
-	}
-	
-    
-	public Scanner(TokenStream stream) {
-		//IMPLEMENT THE CONSTRUCTOR
-		this.stream=stream;
-		this.characterPtr=0;
 	}
 
 
@@ -64,6 +64,7 @@ public class Scanner {
 				stream.tokens.add(t);
 			}
 		} while (!t.kind.equals(EOF));
+		System.out.println(stream.lineBreaks.length);
 	}
 
 	private Token next() throws LexicalException{
@@ -75,7 +76,7 @@ public class Scanner {
 		Token token;
 		while(characterPtr < stream.inputChars.length && Character.isWhitespace(stream.inputChars[characterPtr]))
 			characterPtr++;
-		
+
 		if(characterPtr >= stream.inputChars.length){
 			token = stream.new Token(EOF,characterPtr,characterPtr);
 			return token;
@@ -157,11 +158,15 @@ public class Scanner {
 						return stream.new Token(operatorMaps.get(String.valueOf(stream.inputChars[characterPtr-1])),begin,characterPtr);
 				case 5:
 					if(nextChar=='/'){//Following lines are comments
+						System.out.println("Hello");
 						characterPtr++;
 						begin=characterPtr;
 						nextChar=stream.inputChars[characterPtr];
-						while(nextChar!='\n' && nextChar!='\r' && characterPtr<stream.inputChars.length)
-							nextChar=stream.inputChars[++characterPtr];
+						while(nextChar!='\n' && nextChar!='\r' && characterPtr<stream.inputChars.length){
+							++characterPtr;
+							if(characterPtr<stream.inputChars.length)
+								nextChar=stream.inputChars[characterPtr];
+						}
 						
 						return stream.new Token(COMMENT,begin,characterPtr);
 					}else//division operator
@@ -186,12 +191,13 @@ public class Scanner {
 		}
 		String output = stream.tokenTextListToString();
 		System.out.println(output);
-		assertEquals(expected,output);	
+		assertEquals(expected,output);
+		System.out.println(stream.lineBreaks.length);
 	}
 	
 	public static void main(String[] args) throws LexicalException {
-		String input = "abc//=|&==!=<><=>=+-/*%!<<\n>>";
-		String expected = "abc,>>,";  //comma separated (and terminated)
+		String input = "\n\tabc\nxyz\n<<\n>>";
+		String expected = "abc,xyz,<<,>>,";  //comma separated (and terminated)
 		                                           //text of tokens in input
 		compareText(input,expected);
 	}
